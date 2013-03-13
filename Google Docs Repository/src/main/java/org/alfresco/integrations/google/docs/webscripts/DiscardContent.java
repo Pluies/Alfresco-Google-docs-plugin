@@ -35,6 +35,7 @@ import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransacti
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.site.SiteInfo;
 import org.alfresco.service.cmr.site.SiteService;
 import org.alfresco.service.transaction.TransactionService;
 import org.apache.commons.httpclient.HttpStatus;
@@ -52,258 +53,257 @@ import com.google.gdata.data.docs.DocumentListEntry;
 
 
 public class DiscardContent
-    extends GoogleDocsWebScripts
+extends GoogleDocsWebScripts
 {
-    private static final Log    log               = LogFactory.getLog(DiscardContent.class);
+	private static final Log    log               = LogFactory.getLog(DiscardContent.class);
 
-    private GoogleDocsService   googledocsService;
-    private NodeService         nodeService;
-    private TransactionService  transactionService;
-    private SiteService         siteService;
+	private GoogleDocsService   googledocsService;
+	private NodeService         nodeService;
+	private TransactionService  transactionService;
+	private SiteService         siteService;
 
-    private static final String JSON_KEY_NODEREF  = "nodeRef";
-    private static final String JSON_KEY_OVERRIDE = "override";
+	private static final String JSON_KEY_NODEREF  = "nodeRef";
+	private static final String JSON_KEY_OVERRIDE = "override";
 
-    private static final String MODEL_SUCCESS     = "success";
-
-
-    public void setGoogledocsService(GoogleDocsService googledocsService)
-    {
-        this.googledocsService = googledocsService;
-    }
+	private static final String MODEL_SUCCESS     = "success";
 
 
-    public void setNodeService(NodeService nodeService)
-    {
-        this.nodeService = nodeService;
-    }
+	public void setGoogledocsService(GoogleDocsService googledocsService)
+	{
+		this.googledocsService = googledocsService;
+	}
 
 
-    public void setTransactionService(TransactionService transactionService)
-    {
-        this.transactionService = transactionService;
-    }
+	public void setNodeService(NodeService nodeService)
+	{
+		this.nodeService = nodeService;
+	}
 
 
-    public void setSiteService(SiteService siteService)
-    {
-        this.siteService = siteService;
-    }
+	public void setTransactionService(TransactionService transactionService)
+	{
+		this.transactionService = transactionService;
+	}
 
 
-    @Override
-    protected Map<String, Object> executeImpl(WebScriptRequest req, Status status, Cache cache)
-    {
-        getGoogleDocsServiceSubsystem();
-
-        Map<String, Object> model = new HashMap<String, Object>();
-
-        Map<String, Serializable> map = parseContent(req);
-        final NodeRef nodeRef = (NodeRef)map.get(JSON_KEY_NODEREF);
-
-        if (nodeService.hasAspect(nodeRef, GoogleDocsModel.ASPECT_EDITING_IN_GOOGLE))
-        {
-            try
-            {
-                boolean deleted = false;
-
-                if (!Boolean.valueOf(map.get(JSON_KEY_OVERRIDE).toString()))
-                {
-                    if (siteService.isMember(siteService.getSite(nodeRef).getShortName(), AuthenticationUtil.getRunAsUser()))
-                    {
-
-                        if (googledocsService.hasConcurrentEditors(nodeRef))
-                        {
-                            throw new WebScriptException(HttpStatus.SC_CONFLICT, "Node: " + nodeRef.toString()
-                                                                                 + " has concurrent editors.");
-                        }
-                    }
-                    else
-                    {
-                        throw new AccessDeniedException("Access Denied.  You do not have the appropriate permissions to perform this operation.");
-                    }
-                }
-
-                deleted = delete(nodeRef);
-
-                model.put(MODEL_SUCCESS, deleted);
-
-            }
-            catch (InvalidNodeRefException ine)
-            {
-                throw new WebScriptException(HttpStatus.SC_NOT_FOUND, ine.getMessage());
-            }
-            catch (IOException ioe)
-            {
-                throw new WebScriptException(HttpStatus.SC_INTERNAL_SERVER_ERROR, ioe.getMessage());
-            }
-            catch (GoogleDocsAuthenticationException gdae)
-            {
-                throw new WebScriptException(HttpStatus.SC_BAD_GATEWAY, gdae.getMessage());
-            }
-            catch (GoogleDocsRefreshTokenException gdrte)
-            {
-                throw new WebScriptException(HttpStatus.SC_BAD_GATEWAY, gdrte.getMessage());
-            }
-            catch (GoogleDocsServiceException gdse)
-            {
-                if (gdse.getPassedStatusCode() > -1)
-                {
-                    throw new WebScriptException(gdse.getPassedStatusCode(), gdse.getMessage());
-                }
-                else
-                {
-                    throw new WebScriptException(gdse.getMessage());
-                }
-            }
-            catch (AccessDeniedException ade)
-            {
-                // This code will make changes after the rollback has occurred to clean up the node: remove the lock and the Google
-                // Docs aspect. If it has the temporary aspect it will also remove the node from Alfresco
-                AlfrescoTransactionSupport.bindListener(new TransactionListenerAdapter()
-                {
-                    public void afterRollback()
-                    {
-                        transactionService.getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Object>()
-                        {
-                            public Object execute()
-                                throws Throwable
-                            {
-                                DocumentListEntry documentListEntry = googledocsService.getDocumentListEntry(nodeService.getProperty(nodeRef, GoogleDocsModel.PROP_RESOURCE_ID).toString());
-                                googledocsService.unlockNode(nodeRef);
-                                boolean deleted = googledocsService.deleteContent(nodeRef, documentListEntry);
-
-                                if (deleted)
-                                {
-                                    AuthenticationUtil.runAsSystem(new AuthenticationUtil.RunAsWork<Object>()
-                                    {
-                                        public Object doWork()
-                                            throws Exception
-                                        {
-                                            if (nodeService.hasAspect(nodeRef, ContentModel.ASPECT_TEMPORARY))
-                                            {
-                                                nodeService.deleteNode(nodeRef);
-                                            }
-
-                                            return null;
-                                        }
-                                    });
-                                }
-
-                                return null;
-                            }
-                        }, false, true);
-                    }
-                });
-
-                throw new WebScriptException(HttpStatus.SC_FORBIDDEN, ade.getMessage(), ade);
-            }
-        }
-        else
-        {
-            throw new WebScriptException(HttpStatus.SC_NOT_ACCEPTABLE, "Missing Google Docs Aspect on " + nodeRef.toString());
-        }
-
-        return model;
-    }
+	public void setSiteService(SiteService siteService)
+	{
+		this.siteService = siteService;
+	}
 
 
-    /**
-     * Delete the node from Google. If the node has the temporary aspect it is also removed from Alfresco.
-     * 
-     * @param nodeRef
-     * @return
-     * @throws InvalidNodeRefException
-     * @throws IOException
-     * @throws GoogleDocsServiceException
-     * @throws GoogleDocsAuthenticationException
-     * @throws GoogleDocsRefreshTokenException
-     */
-    private boolean delete(NodeRef nodeRef)
-        throws InvalidNodeRefException,
-            IOException,
-            GoogleDocsServiceException,
-            GoogleDocsAuthenticationException,
-            GoogleDocsRefreshTokenException
-    {
-        DocumentListEntry documentListEntry = googledocsService.getDocumentListEntry(nodeService.getProperty(nodeRef, GoogleDocsModel.PROP_RESOURCE_ID).toString());
-        googledocsService.unlockNode(nodeRef);
-        boolean deleted = googledocsService.deleteContent(nodeRef, documentListEntry);
+	@Override
+	protected Map<String, Object> executeImpl(WebScriptRequest req, Status status, Cache cache)
+	{
+		getGoogleDocsServiceSubsystem();
 
-        if (deleted)
-        {
-            if (nodeService.hasAspect(nodeRef, ContentModel.ASPECT_TEMPORARY))
-            {
-                nodeService.deleteNode(nodeRef);
-            }
-        }
+		Map<String, Object> model = new HashMap<String, Object>();
 
-        return deleted;
-    }
+		Map<String, Serializable> map = parseContent(req);
+		final NodeRef nodeRef = (NodeRef)map.get(JSON_KEY_NODEREF);
+
+		if (nodeService.hasAspect(nodeRef, GoogleDocsModel.ASPECT_EDITING_IN_GOOGLE))
+		{
+			try
+			{
+				boolean deleted = false;
+
+				if (!Boolean.valueOf(map.get(JSON_KEY_OVERRIDE).toString()))
+				{
+					if (googledocsService.hasConcurrentEditors(nodeRef))
+					{
+						throw new WebScriptException(HttpStatus.SC_CONFLICT, "Node: " + nodeRef.toString()
+								+ " has concurrent editors.");
+					}
+
+					SiteInfo site = siteService.getSite(nodeRef);
+					if (site != null &&
+							!siteService.isMember(site.getShortName(), AuthenticationUtil.getRunAsUser()))
+					{
+						throw new AccessDeniedException("Access Denied.  You do not have the appropriate permissions to perform this operation.");
+					}
+				}
+
+				deleted = delete(nodeRef);
+
+				model.put(MODEL_SUCCESS, deleted);
+
+			}
+			catch (InvalidNodeRefException ine)
+			{
+				throw new WebScriptException(HttpStatus.SC_NOT_FOUND, ine.getMessage());
+			}
+			catch (IOException ioe)
+			{
+				throw new WebScriptException(HttpStatus.SC_INTERNAL_SERVER_ERROR, ioe.getMessage());
+			}
+			catch (GoogleDocsAuthenticationException gdae)
+			{
+				throw new WebScriptException(HttpStatus.SC_BAD_GATEWAY, gdae.getMessage());
+			}
+			catch (GoogleDocsRefreshTokenException gdrte)
+			{
+				throw new WebScriptException(HttpStatus.SC_BAD_GATEWAY, gdrte.getMessage());
+			}
+			catch (GoogleDocsServiceException gdse)
+			{
+				if (gdse.getPassedStatusCode() > -1)
+				{
+					throw new WebScriptException(gdse.getPassedStatusCode(), gdse.getMessage());
+				}
+				else
+				{
+					throw new WebScriptException(gdse.getMessage());
+				}
+			}
+			catch (AccessDeniedException ade)
+			{
+				// This code will make changes after the rollback has occurred to clean up the node: remove the lock and the Google
+				// Docs aspect. If it has the temporary aspect it will also remove the node from Alfresco
+				AlfrescoTransactionSupport.bindListener(new TransactionListenerAdapter()
+				{
+					public void afterRollback()
+					{
+						transactionService.getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Object>()
+								{
+							public Object execute()
+									throws Throwable
+									{
+								DocumentListEntry documentListEntry = googledocsService.getDocumentListEntry(nodeService.getProperty(nodeRef, GoogleDocsModel.PROP_RESOURCE_ID).toString());
+								googledocsService.unlockNode(nodeRef);
+								boolean deleted = googledocsService.deleteContent(nodeRef, documentListEntry);
+
+								if (deleted)
+								{
+									AuthenticationUtil.runAsSystem(new AuthenticationUtil.RunAsWork<Object>()
+											{
+										public Object doWork()
+												throws Exception
+												{
+											if (nodeService.hasAspect(nodeRef, ContentModel.ASPECT_TEMPORARY))
+											{
+												nodeService.deleteNode(nodeRef);
+											}
+
+											return null;
+												}
+											});
+								}
+
+								return null;
+									}
+								}, false, true);
+					}
+				});
+
+				throw new WebScriptException(HttpStatus.SC_FORBIDDEN, ade.getMessage(), ade);
+			}
+		}
+		else
+		{
+			throw new WebScriptException(HttpStatus.SC_NOT_ACCEPTABLE, "Missing Google Docs Aspect on " + nodeRef.toString());
+		}
+
+		return model;
+	}
 
 
-    private Map<String, Serializable> parseContent(final WebScriptRequest req)
-    {
-        final Map<String, Serializable> result = new HashMap<String, Serializable>();
-        Content content = req.getContent();
-        String jsonStr = null;
-        JSONObject json = null;
+	/**
+	 * Delete the node from Google. If the node has the temporary aspect it is also removed from Alfresco.
+	 * 
+	 * @param nodeRef
+	 * @return
+	 * @throws InvalidNodeRefException
+	 * @throws IOException
+	 * @throws GoogleDocsServiceException
+	 * @throws GoogleDocsAuthenticationException
+	 * @throws GoogleDocsRefreshTokenException
+	 */
+	private boolean delete(NodeRef nodeRef)
+			throws InvalidNodeRefException,
+			IOException,
+			GoogleDocsServiceException,
+			GoogleDocsAuthenticationException,
+			GoogleDocsRefreshTokenException
+			{
+		DocumentListEntry documentListEntry = googledocsService.getDocumentListEntry(nodeService.getProperty(nodeRef, GoogleDocsModel.PROP_RESOURCE_ID).toString());
+		googledocsService.unlockNode(nodeRef);
+		boolean deleted = googledocsService.deleteContent(nodeRef, documentListEntry);
 
-        try
-        {
-            if (content == null || content.getSize() == 0)
-            {
-                throw new WebScriptException(HttpStatus.SC_BAD_REQUEST, "No content sent with request.");
-            }
+		if (deleted)
+		{
+			if (nodeService.hasAspect(nodeRef, ContentModel.ASPECT_TEMPORARY))
+			{
+				nodeService.deleteNode(nodeRef);
+			}
+		}
 
-            jsonStr = content.getContent();
-            log.debug("Parsed JSON: " + jsonStr);
+		return deleted;
+			}
 
-            if (jsonStr == null || jsonStr.trim().length() == 0)
-            {
-                throw new WebScriptException(HttpStatus.SC_BAD_REQUEST, "No content sent with request.");
-            }
 
-            json = new JSONObject(jsonStr);
+	private Map<String, Serializable> parseContent(final WebScriptRequest req)
+	{
+		final Map<String, Serializable> result = new HashMap<String, Serializable>();
+		Content content = req.getContent();
+		String jsonStr = null;
+		JSONObject json = null;
 
-            if (!json.has(JSON_KEY_NODEREF))
-            {
-                throw new WebScriptException(HttpStatus.SC_BAD_REQUEST, "Key " + JSON_KEY_NODEREF + " is missing from JSON: "
-                                                                        + jsonStr);
-            }
-            else
-            {
-                NodeRef nodeRef = new NodeRef(json.getString(JSON_KEY_NODEREF));
-                result.put(JSON_KEY_NODEREF, nodeRef);
+		try
+		{
+			if (content == null || content.getSize() == 0)
+			{
+				throw new WebScriptException(HttpStatus.SC_BAD_REQUEST, "No content sent with request.");
+			}
 
-                if (json.has(JSON_KEY_OVERRIDE))
-                {
-                    result.put(JSON_KEY_OVERRIDE, json.getBoolean(JSON_KEY_OVERRIDE));
-                }
-                else
-                {
-                    result.put(JSON_KEY_OVERRIDE, false);
-                }
-            }
-        }
-        catch (final IOException ioe)
-        {
-            throw new WebScriptException(HttpStatus.SC_INTERNAL_SERVER_ERROR, ioe.getMessage(), ioe);
-        }
-        catch (final JSONException je)
-        {
-            throw new WebScriptException(HttpStatus.SC_BAD_REQUEST, "Unable to parse JSON: " + jsonStr);
-        }
-        catch (final WebScriptException wse)
-        {
-            throw wse; // Ensure WebScriptExceptions get rethrown verbatim
-        }
-        catch (final Exception e)
-        {
-            throw new WebScriptException(HttpStatus.SC_BAD_REQUEST, "Unable to parse JSON '" + jsonStr + "'.", e);
-        }
+			jsonStr = content.getContent();
+			log.debug("Parsed JSON: " + jsonStr);
 
-        return result;
-    }
+			if (jsonStr == null || jsonStr.trim().length() == 0)
+			{
+				throw new WebScriptException(HttpStatus.SC_BAD_REQUEST, "No content sent with request.");
+			}
+
+			json = new JSONObject(jsonStr);
+
+			if (!json.has(JSON_KEY_NODEREF))
+			{
+				throw new WebScriptException(HttpStatus.SC_BAD_REQUEST, "Key " + JSON_KEY_NODEREF + " is missing from JSON: "
+						+ jsonStr);
+			}
+			else
+			{
+				NodeRef nodeRef = new NodeRef(json.getString(JSON_KEY_NODEREF));
+				result.put(JSON_KEY_NODEREF, nodeRef);
+
+				if (json.has(JSON_KEY_OVERRIDE))
+				{
+					result.put(JSON_KEY_OVERRIDE, json.getBoolean(JSON_KEY_OVERRIDE));
+				}
+				else
+				{
+					result.put(JSON_KEY_OVERRIDE, false);
+				}
+			}
+		}
+		catch (final IOException ioe)
+		{
+			throw new WebScriptException(HttpStatus.SC_INTERNAL_SERVER_ERROR, ioe.getMessage(), ioe);
+		}
+		catch (final JSONException je)
+		{
+			throw new WebScriptException(HttpStatus.SC_BAD_REQUEST, "Unable to parse JSON: " + jsonStr);
+		}
+		catch (final WebScriptException wse)
+		{
+			throw wse; // Ensure WebScriptExceptions get rethrown verbatim
+		}
+		catch (final Exception e)
+		{
+			throw new WebScriptException(HttpStatus.SC_BAD_REQUEST, "Unable to parse JSON '" + jsonStr + "'.", e);
+		}
+
+		return result;
+	}
 
 }
