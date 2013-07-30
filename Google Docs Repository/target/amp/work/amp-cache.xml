@@ -5,40 +5,41 @@
       <path-set>
         <pathsSet class="linked-hash-set">
           <string>lib/spring-social-google-docs-1.1.2-RELEASE.jar</string>
-          <string>lib/alfresco-googledocs-repo-2.0.2-SNAPSHOT.jar</string>
-          <string>config/alfresco/module/org.alfresco.integrations.google.docs/module-context.xml</string>
-          <string>config/alfresco/module/org.alfresco.integrations.google.docs/resources/UntitledPresentation</string>
-          <string>config/alfresco/module/org.alfresco.integrations.google.docs/resources/UntitledDocument</string>
-          <string>config/alfresco/module/org.alfresco.integrations.google.docs/resources/UntitledSpreadsheet</string>
-          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/UploadContent.get.desc.xml</string>
-          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/CreateContent.get.desc.xml</string>
-          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/CompleteAuth.get_es.properties</string>
-          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/CompleteAuth.get_zh_CN.properties</string>
-          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/UploadContent.get.json.ftl</string>
-          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/CompleteAuth.get.html.ftl</string>
-          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/CompleteAuth.get_nl.properties</string>
-          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/HasConcurrentEditors.get.desc.xml</string>
-          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/CompleteAuth.get_en.properties</string>
-          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/CompleteAuth.get_ja.properties</string>
-          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/CompleteAuth.get.properties</string>
-          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/Exportable.get.json.ftl</string>
-          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/CompleteAuth.get_fr.properties</string>
+          <string>lib/alfresco-googledocs-repo-2.0.3-SNAPSHOT.jar</string>
           <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/AuthURL.get.json.ftl</string>
-          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/DiscardContent.post.desc.xml</string>
-          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/AuthURL.get.desc.xml</string>
+          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/UploadContent.get.json.ftl</string>
           <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/HasConcurrentEditors.get.json.ftl</string>
-          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/Exportable.get.desc.xml</string>
-          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/DiscardContent.post.json.ftl</string>
-          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/SaveContent.post.json.ftl</string>
-          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/CompleteAuth.get_de.properties</string>
           <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/CreateContent.get.json.ftl</string>
-          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/CompleteAuth.get.desc.xml</string>
+          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/AuthURL.get.desc.xml</string>
+          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/SaveContent.post.json.ftl</string>
+          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/CompleteAuth.get_zh_CN.properties</string>
+          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/DiscardContent.post.desc.xml</string>
+          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/CompleteAuth.get_en.properties</string>
+          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/CompleteAuth.get.html.ftl</string>
           <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/CompleteAuth.get_ru.properties</string>
-          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/SaveContent.post.desc.xml</string>
+          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/UploadContent.get.desc.xml</string>
+          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/CompleteAuth.get_nl.properties</string>
+          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/DiscardContent.post.json.ftl</string>
+          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/Exportable.get.json.ftl</string>
+          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/CompleteAuth.get.desc.xml</string>
+          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/CompleteAuth.get_ja.properties</string>
+          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/CompleteAuth.get_fr.properties</string>
+          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/CompleteAuth.get_es.properties</string>
+          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/Exportable.get.desc.xml</string>
+          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/HasConcurrentEditors.get.desc.xml</string>
           <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/CompleteAuth.get_it.properties</string>
+          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/SaveContent.post.desc.xml</string>
+          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/CompleteAuth.get.properties</string>
+          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/CompleteAuth.get_de.properties</string>
+          <string>config/alfresco/templates/webscripts/org/alfresco/integrations/google/docs/CreateContent.get.desc.xml</string>
+          <string>config/alfresco/subsystems/googledocs/v2/googledocs.properties</string>
           <string>config/alfresco/subsystems/googledocs/v2/googledocs-context.xml</string>
           <string>config/alfresco/subsystems/googledocs/v2/googledocs-model.xml</string>
-          <string>config/alfresco/subsystems/googledocs/v2/googledocs.properties</string>
+          <string>config/alfresco/module/org.alfresco.integrations.google.docs/module-context.xml</string>
+          <string>config/alfresco/module/org.alfresco.integrations.google.docs/log4j.properties</string>
+          <string>config/alfresco/module/org.alfresco.integrations.google.docs/resources/UntitledDocument</string>
+          <string>config/alfresco/module/org.alfresco.integrations.google.docs/resources/UntitledPresentation</string>
+          <string>config/alfresco/module/org.alfresco.integrations.google.docs/resources/UntitledSpreadsheet</string>
           <string>module.properties</string>
         </pathsSet>
       </path-set>
